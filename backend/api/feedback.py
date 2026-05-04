@@ -79,7 +79,7 @@ async def submit_routing_feedback(
     # Also log to audit trail
     log_audit(
         user_id=current_user["id"],
-        document_id="",
+        document_id=None,
         action="ROUTER_FEEDBACK",
         details={
             "original": feedback.original_department,

@@ -2,7 +2,7 @@ import sqlite3
 import json
 import uuid
 from pathlib import Path
-from backend.config import settings
+from config import settings
 
 def get_db_connection():
     # check_same_thread=False is needed for FastAPI when using SQLite

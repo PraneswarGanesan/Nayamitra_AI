@@ -1,10 +1,10 @@
 from langgraph.graph import StateGraph, END
-from backend.core.schemas import GraphState
-from backend.agents.parseragent import parse_pdf_node
-from backend.agents.operative_agent import extract_operative_portion_node
-from backend.agents.extractor_agent import extract_metadata_node
-from backend.agents.drective_agent import extract_directives_node
-from backend.agents.human_loop_agent import format_verification_data_node
+from core.schemas import GraphState
+from agents.parseragent import parse_pdf_node
+from agents.operative_agent import extract_operative_portion_node
+from agents.extractor_agent import extract_metadata_node
+from agents.drective_agent import extract_directives_node
+from agents.human_loop_agent import format_verification_data_node
 
 def create_pipeline():
     workflow = StateGraph(GraphState)

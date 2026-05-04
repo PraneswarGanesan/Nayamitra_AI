@@ -1,5 +1,5 @@
 import logging
-from backend.config import settings
+from config import settings
 
 def get_logger(name: str):
     logger = logging.getLogger(name)

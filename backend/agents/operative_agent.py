@@ -1,9 +1,9 @@
 from typing import Dict, Any
-from backend.utils.llm import get_llm
+from utils.llm import get_llm
 from langchain_core.prompts import PromptTemplate
-from backend.core.schemas import GraphState
-from backend.logger import get_logger
-from backend.config import settings
+from core.schemas import GraphState
+from logger import get_logger
+from config import settings
 
 logger = get_logger(__name__)
 

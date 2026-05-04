@@ -1,8 +1,8 @@
 from typing import Dict, Any
-from backend.utils.llm import get_llm
-from backend.core.schemas import GraphState, CaseMetadata
-from backend.logger import get_logger
-from backend.config import settings
+from utils.llm import get_llm
+from core.schemas import GraphState, CaseMetadata
+from logger import get_logger
+from config import settings
 
 logger = get_logger(__name__)
 

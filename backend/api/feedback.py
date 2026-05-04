@@ -10,10 +10,10 @@ import json
 from typing import Dict
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from backend.api.auth import get_current_user
-from backend.database.db import log_audit
-from backend.logger import get_logger
-from backend.config import settings
+from api.auth import get_current_user
+from database.db import log_audit
+from logger import get_logger
+from config import settings
 
 router = APIRouter()
 logger = get_logger(__name__)

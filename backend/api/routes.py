@@ -3,12 +3,12 @@ import os
 import shutil
 import uuid
 import json
-from backend.utils.pipeline import create_pipeline
-from backend.logger import get_logger
-from backend.config import settings
-from backend.database.db import save_document, get_document, get_all_approved_documents, log_audit
-from backend.api.auth import get_current_user, require_role
-from backend.core.schemas import ActionPlan
+from utils.pipeline import create_pipeline
+from logger import get_logger
+from config import settings
+from database.db import save_document, get_document, get_all_approved_documents, log_audit
+from api.auth import get_current_user, require_role
+from core.schemas import ActionPlan
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -67,7 +67,7 @@ async def upload_document(
 
 @router.get("/documents")
 async def list_documents(current_user: dict = Depends(get_current_user)):
-    from backend.database.db import get_db_connection
+    from database.db import get_db_connection
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -101,7 +101,7 @@ async def verify_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found or access denied")
         
-    from backend.database.db import get_db_connection
+    from database.db import get_db_connection
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''

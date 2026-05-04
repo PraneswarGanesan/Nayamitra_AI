@@ -1,7 +1,7 @@
 from typing import Dict, Any, List, Tuple, Optional
-from backend.core.schemas import GraphState, ActionPlan, DirectiveRecord, VerificationField, TextBlock, CaseSummary, CaseMetadataVerification, ConfidenceExplanation, LimitationData
-from backend.utils.limitation_engine import compute_limitation
-from backend.database.vector_db import search_precedents
+from core.schemas import GraphState, ActionPlan, DirectiveRecord, VerificationField, TextBlock, CaseSummary, CaseMetadataVerification, ConfidenceExplanation, LimitationData
+from utils.limitation_engine import compute_limitation
+from database.vector_db import search_precedents
 import unicodedata
 import re
 import difflib

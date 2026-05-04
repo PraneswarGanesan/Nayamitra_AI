@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-from backend.config import settings
-from backend.database.db import get_db_connection
+from config import settings
+from database.db import get_db_connection
 
 router = APIRouter()
 

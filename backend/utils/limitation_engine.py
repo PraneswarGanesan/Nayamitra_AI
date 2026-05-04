@@ -7,8 +7,8 @@ Limitation Act and case type. No LLM involved — pure deterministic logic.
 
 from datetime import datetime, timedelta
 from typing import Optional, Dict
-from backend.core.schemas import LimitationData
-from backend.logger import get_logger
+from core.schemas import LimitationData
+from logger import get_logger
 
 logger = get_logger(__name__)
 

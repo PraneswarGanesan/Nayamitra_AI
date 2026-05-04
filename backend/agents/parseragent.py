@@ -1,6 +1,6 @@
 import fitz  # PyMuPDF
 from typing import List, Dict, Any
-from backend.core.schemas import TextBlock, GraphState
+from core.schemas import TextBlock, GraphState
 
 def parse_pdf_node(state: GraphState) -> Dict[str, Any]:
     """

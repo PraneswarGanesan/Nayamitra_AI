@@ -9,9 +9,9 @@ to give the reviewer contextual decision support.
 import os
 import json
 from typing import List
-from backend.core.schemas import PrecedentMatch
-from backend.logger import get_logger
-from backend.config import settings
+from core.schemas import PrecedentMatch
+from logger import get_logger
+from config import settings
 
 logger = get_logger(__name__)
 

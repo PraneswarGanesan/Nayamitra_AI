@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pymupdf
+langgraph
+langchain
+langchain-core
+langchain-openai
+pydantic
+pydantic-settings
+python-dotenv
+python-multipart

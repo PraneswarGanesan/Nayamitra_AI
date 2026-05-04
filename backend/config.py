@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     # ── Database ──────────────────────────────────────────────────────────────
     DB_PATH: Path = BASE_DIR / "data" / "nayamitra.db"
 
+    # ── Authentication ────────────────────────────────────────────────────────
+    JWT_SECRET: str = "super_secret_key_change_in_production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = 60
+
     # ── Feature flags ─────────────────────────────────────────────────────────
     LOG_LEVEL: str = "INFO"
 

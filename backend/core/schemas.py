@@ -73,6 +73,21 @@ class VerificationField(BaseModel):
     status: str = "Pending"
     review: ReviewAction = Field(default_factory=ReviewAction)
 
+class LimitationData(BaseModel):
+    is_appealable: bool = False
+    statutory_period_days: int = 0
+    date_of_order: str = ""
+    computed_deadline_date: str = ""
+    urgency_status: str = "GREEN"
+    reasoning: str = ""
+
+class PrecedentMatch(BaseModel):
+    case_number: str = ""
+    similarity_score: float = 0.0
+    historical_directive: str = ""
+    department_action_taken: str = ""
+    outcome: str = ""
+
 class DirectiveRecord(BaseModel):
     summary: str
     directive: str
@@ -89,6 +104,7 @@ class DirectiveRecord(BaseModel):
     confidence_band: str = "HIGH"
     confidence_explanation: Optional[ConfidenceExplanation] = None
     anchor_offset: Optional[Dict[str, int]] = None
+    historical_precedents: List[PrecedentMatch] = []
     status: str = "Pending"
     review: ReviewAction = Field(default_factory=ReviewAction)
 
@@ -106,6 +122,7 @@ class ActionPlan(BaseModel):
     case_summary: Optional[CaseSummary] = None
     case_metadata: CaseMetadataVerification
     directives: List[DirectiveRecord]
+    limitation_data: Optional[LimitationData] = None
 
 # LangGraph State Schema
 from typing_extensions import TypedDict
@@ -118,4 +135,5 @@ class GraphState(TypedDict):
     case_metadata_raw: Optional[CaseMetadata]
     directives_raw: List[DirectiveRaw]
     action_plan: Optional[ActionPlan]
+    limitation_data: Optional[LimitationData]
     human_verified: bool

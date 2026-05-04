@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.api.routes import router as api_router
 from backend.api.auth import router as auth_router
+from backend.api.feedback import router as feedback_router
 import os
 from dotenv import load_dotenv
 
@@ -20,6 +21,7 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(api_router, prefix="/api", tags=["documents"])
+app.include_router(feedback_router, prefix="/api/router", tags=["feedback"])
 
 @app.get("/")
 def root():

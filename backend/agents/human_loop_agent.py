@@ -1,5 +1,7 @@
 from typing import Dict, Any, List, Tuple, Optional
-from backend.core.schemas import GraphState, ActionPlan, DirectiveRecord, VerificationField, TextBlock, CaseSummary, CaseMetadataVerification, ConfidenceExplanation
+from backend.core.schemas import GraphState, ActionPlan, DirectiveRecord, VerificationField, TextBlock, CaseSummary, CaseMetadataVerification, ConfidenceExplanation, LimitationData
+from backend.utils.limitation_engine import compute_limitation
+from backend.database.vector_db import search_precedents
 import unicodedata
 import re
 import difflib
@@ -313,14 +315,35 @@ def format_verification_data_node(state: GraphState) -> Dict[str, Any]:
             confidence_band=get_confidence_band(ratio),
             confidence_explanation=exp,
             anchor_offset=anchor,
+            historical_precedents=search_precedents(d.directive, top_k=3),
             status="Pending"
         )
         formatted_directives.append(record)
+    
+    # Compute Limitation Data
+    limitation_data = None
+    if case_meta:
+        case_type_val = ""
+        date_val = ""
+        outcome_type = ""
+        directive_text = ""
+        
+        if case_meta.case_type and case_meta.case_type.value:
+            case_type_val = case_meta.case_type.value
+        if case_meta.date_of_order and case_meta.date_of_order.value:
+            date_val = case_meta.date_of_order.value
+        if case_meta.case_summary:
+            outcome_type = case_meta.case_summary.case_outcome_type
+        if directives:
+            directive_text = directives[0].directive
+            
+        limitation_data = compute_limitation(case_type_val, date_val, outcome_type, directive_text)
         
     action_plan = ActionPlan(
         case_summary=case_summary,
         case_metadata=strict_meta,
-        directives=formatted_directives
+        directives=formatted_directives,
+        limitation_data=limitation_data
     )
     
     return {"action_plan": action_plan}

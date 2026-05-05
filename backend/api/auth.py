@@ -6,6 +6,8 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from config import settings
 from database.db import get_db_connection
+import uuid
+from core.schemas import SignupRequest
 
 router = APIRouter()
 
@@ -80,3 +82,37 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/signup")
+async def signup(request: SignupRequest):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Check if user exists
+    cursor.execute("SELECT id FROM users WHERE email = ?", (request.email,))
+    if cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=400, detail="Email already registered")
+        
+    # Ensure tenant exists
+    cursor.execute('INSERT OR IGNORE INTO tenants (id, name) VALUES (?, ?)', (request.tenant_id, "Default Department"))
+    
+    # Create user
+    user_id = str(uuid.uuid4())
+    hashed_password = get_password_hash(request.password)
+    
+    cursor.execute('''
+        INSERT INTO users (id, email, hashed_password, role, tenant_id)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (user_id, request.email, hashed_password, request.role, request.tenant_id))
+    
+    conn.commit()
+    conn.close()
+    
+    # Auto login and return token
+    access_token_expires = timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user_id, "role": request.role, "tenant_id": request.tenant_id}, 
+        expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer", "message": "User created successfully"}

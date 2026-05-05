@@ -137,3 +137,13 @@ class GraphState(TypedDict):
     action_plan: Optional[ActionPlan]
     limitation_data: Optional[LimitationData]
     human_verified: bool
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    role: str = "law_officer"
+    tenant_id: str = "default_tenant"
+
+class ChatRequest(BaseModel):
+    message: str
+    history: List[dict] = []

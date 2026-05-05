@@ -1,43 +1,99 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE,
 });
 
-// Attach JWT token to every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('nayamitra_token');
+  const token = localStorage.getItem('nyayamitra_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Auth
-export const login = (email, password) =>
-  api.post('/auth/token', new URLSearchParams({ username: email, password }), {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('nyayamitra_token');
+      localStorage.removeItem('nyayamitra_user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
 
-// Documents
-export const uploadDocument = (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  return api.post('/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export const authService = {
+  async login(username, password) {
+    const params = new URLSearchParams();
+    params.append('username', username);
+    params.append('password', password);
+    const res = await api.post('/api/auth/token', params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    return res.data;
+  },
+  async signup(email, password, role, tenantId) {
+    const res = await api.post('/api/auth/signup', {
+      email,
+      password,
+      role,
+      tenant_id: tenantId,
+    });
+    return res.data;
+  },
 };
 
-export const getDocuments = () => api.get('/documents');
-export const getDocument = (docId) => api.get(`/document/${docId}`);
-export const verifyDocument = (docId, plan) => api.post(`/verify/${docId}`, plan);
+export const documentService = {
+  async list() {
+    const res = await api.get('/api/documents');
+    return res.data;
+  },
+  async get(docId) {
+    const res = await api.get(`/api/document/${docId}`);
+    return res.data;
+  },
+  async upload(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await api.post('/api/upload', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+  async verify(docId, actionPlan) {
+    const res = await api.post(`/api/verify/${docId}`, actionPlan);
+    return res.data;
+  },
+  async chat(docId, message, history) {
+    const res = await api.post(`/api/chat/${docId}`, { message, history });
+    return res.data;
+  },
+};
 
-// Dashboard
-export const getDashboardActions = () => api.get('/dashboard/actions');
+export const dashboardService = {
+  async getActions() {
+    const res = await api.get('/api/dashboard/actions');
+    return res.data;
+  },
+  async getAuditLogs() {
+    const res = await api.get('/api/audit-log');
+    return res.data;
+  },
+};
 
-// Feedback
-export const submitRouterFeedback = (data) => api.post('/router/feedback', data);
+export const feedbackService = {
+  async submit(directiveText, originalDept, correctedDept) {
+    const res = await api.post('/api/router/feedback', {
+      directive_text: directiveText,
+      original_department: originalDept,
+      corrected_department: correctedDept,
+    });
+    return res.data;
+  },
+};
 
 export default api;

@@ -8,7 +8,9 @@ from logger import get_logger
 from config import settings
 from database.db import save_document, get_document, get_all_approved_documents, log_audit
 from api.auth import get_current_user, require_role
-from core.schemas import ActionPlan
+from core.schemas import ActionPlan, ChatRequest
+from utils.llm import get_llm
+from langchain_core.messages import HumanMessage, SystemMessage
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -95,7 +97,7 @@ async def get_document_by_id(doc_id: str, current_user: dict = Depends(get_curre
 async def verify_document(
     doc_id: str, 
     verified_plan: ActionPlan,
-    current_user: dict = Depends(require_role(["reviewer", "admin"]))
+    current_user: dict = Depends(require_role(["reviewer", "admin", "law_officer"]))
 ):
     doc = get_document(doc_id, tenant_id=current_user["tenant_id"])
     if not doc:
@@ -124,3 +126,66 @@ async def get_dashboard_actions(current_user: dict = Depends(get_current_user)):
         if doc["action_plan"]:
             doc["action_plan"] = json.loads(doc["action_plan"])
     return docs
+
+@router.get("/audit-log")
+async def get_audit_log(current_user: dict = Depends(get_current_user)):
+    from database.db import get_db_connection
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get audit logs for the current tenant's users
+    query = '''
+        SELECT a.id, a.user_id, a.document_id, a.action, a.details_json, a.timestamp, u.email as user_email
+        FROM audit_log a
+        JOIN users u ON a.user_id = u.id
+        WHERE u.tenant_id = ?
+        ORDER BY a.timestamp DESC
+        LIMIT 50
+    '''
+    cursor.execute(query, (current_user["tenant_id"],))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    logs = []
+    for row in rows:
+        log = dict(row)
+        if log["details_json"]:
+            log["details_json"] = json.loads(log["details_json"])
+        logs.append(log)
+    return logs
+
+@router.post("/chat/{doc_id}")
+async def chat_with_document(
+    doc_id: str, 
+    request: ChatRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    doc = get_document(doc_id, tenant_id=current_user["tenant_id"])
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found or access denied")
+        
+    action_plan_str = doc["action_plan"] or "{}"
+    
+    system_prompt = f"""You are an AI legal assistant helping a law officer review a document.
+Here is the extracted Action Plan JSON for this document:
+{action_plan_str}
+
+Answer the user's questions based ONLY on the provided JSON data. If the answer is not in the JSON, politely state that you cannot find that information in the extracted data. Be concise and professional."""
+
+    messages = [SystemMessage(content=system_prompt)]
+    for msg in request.history:
+        # Simplistic mapping, assuming history is list of dicts like {"role": "user", "content": "..."}
+        messages.append(HumanMessage(content=msg["content"]) if msg["role"] == "user" else SystemMessage(content=msg["content"]))
+    messages.append(HumanMessage(content=request.message))
+    
+    try:
+        llm = get_llm(temperature=0.2)
+        response = llm.invoke(messages)
+        
+        # Log the chat
+        log_audit(current_user["id"], doc_id, "AI_CHAT", {"message": request.message})
+        
+        return {"reply": response.content}
+    except Exception as e:
+        logger.error(f"Chat failed for {doc_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to communicate with AI")

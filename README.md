@@ -7,6 +7,17 @@
 
 ---
 
+## 🚀 Live Demo
+
+**Access the live application here:** [NyayaMitra Enterprise Portal](https://nayamitra-jjwjdc7or-praneswars-projects.vercel.app)
+
+*(Note: The backend is hosted on a free Render tier. It may take 30-50 seconds to wake up upon the first request. Please be patient!)*
+
+⚠️ **Important Testing Note:** Because the system was recently migrated from a local development environment to production cloud servers, some legacy pre-populated PDFs on the dashboard may return a `404 Not Found` error. 
+**To experience the full potential of the platform and witness the cinematic intelligence pipeline, please upload a fresh judgment PDF using the "Upload Judgment" button.**
+
+---
+
 ## Overview
 
 NyayaMitra is an AI co-pilot for the Court Case Monitoring System (CCMS) that turns High Court judgment PDFs into verified, actionable plans for government officers. It reads the judgment, extracts every directive with source-linked proof, computes appeal deadlines under the Limitation Act, and hands a verified action plan to the law officer for sign-off.
@@ -205,6 +216,57 @@ A law officer uploads a 62-page scanned High Court judgment. Within 90 seconds:
 |---|---|
 | `README.md` | This file — full solution documentation |
 | `architecture.png` | High-level system architecture diagram |
+
+---
+
+## 💻 Local Installation & Setup
+
+If you wish to run the NyayaMitra platform locally on your own machine, follow these steps:
+
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- PostgreSQL (with `pgvector` extension)
+- Redis Server
+- Gemini API Key / OpenRouter API Key
+
+### 1. Backend Setup
+```bash
+# Clone the repository and navigate to the backend directory
+cd backend
+
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment variables
+# Create a .env file based on the provided .env.example with your database and API credentials
+cp .env.example .env
+
+# Run the FastAPI server
+uvicorn main:app --reload
+```
+*The backend will be available at `http://localhost:8000`.*
+
+### 2. Frontend Setup
+```bash
+# Navigate to the frontend directory
+cd nayamitra-frontend
+
+# Install dependencies
+npm install
+
+# Configure environment variables
+# Create a .env file and ensure VITE_API_URL is set to your local backend
+echo "VITE_API_URL=http://localhost:8000" > .env
+
+# Start the development server
+npm run dev
+```
+*The frontend will be available at `http://localhost:5173`.*
 
 ---
 

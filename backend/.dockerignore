@@ -1,0 +1,22 @@
+# Environment variables
+.env
+.env.*
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# IDEs
+.idea/
+.vscode/
+
+# Local data / uploads (if you want these ignored)
+uploads/
+*.db

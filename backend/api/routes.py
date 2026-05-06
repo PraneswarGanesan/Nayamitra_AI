@@ -11,6 +11,7 @@ from api.auth import get_current_user, require_role
 from core.schemas import ActionPlan, ChatRequest
 from utils.llm import get_llm
 from langchain_core.messages import HumanMessage, SystemMessage
+from database.cache import redis_cache
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -60,6 +61,9 @@ async def upload_document(
         
         log_audit(current_user["id"], doc_id, "UPLOAD", {"filename": file.filename})
         
+        await redis_cache.delete_pattern(f"docs:{current_user['tenant_id']}:*")
+        await redis_cache.delete_pattern(f"audit:{current_user['tenant_id']}")
+        
         logger.info(f"Pipeline completed successfully for document {doc_id}")
         return {"doc_id": doc_id, "message": "Extraction complete, pending verification.", "action_plan": action_plan.dict() if action_plan else None}
     except Exception as e:
@@ -69,6 +73,11 @@ async def upload_document(
 
 @router.get("/documents")
 async def list_documents(current_user: dict = Depends(get_current_user)):
+    cache_key = f"docs:{current_user['tenant_id']}:{current_user['id']}" if current_user["role"] == "law_officer" else f"docs:{current_user['tenant_id']}:all"
+    cached = await redis_cache.get(cache_key)
+    if cached:
+        return cached
+
     from database.db import get_db_connection
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -80,7 +89,10 @@ async def list_documents(current_user: dict = Depends(get_current_user)):
         
     rows = cursor.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    
+    result = [dict(r) for r in rows]
+    await redis_cache.set(cache_key, result, ex=60)
+    return result
 
 @router.get("/document/{doc_id}")
 async def get_document_by_id(doc_id: str, current_user: dict = Depends(get_current_user)):
@@ -116,19 +128,63 @@ async def verify_document(
     conn.close()
     
     log_audit(current_user["id"], doc_id, "VERIFY_BULK_APPROVE", {})
+    
+    await redis_cache.delete_pattern(f"docs:{current_user['tenant_id']}:*")
+    await redis_cache.delete(f"dashboard:{current_user['tenant_id']}")
+    await redis_cache.delete(f"audit:{current_user['tenant_id']}")
+    
     logger.info(f"Document {doc_id} verified and approved by human reviewer.")
     return {"message": "Document verified and saved", "doc_id": doc_id}
 
+@router.post("/reject/{doc_id}")
+async def reject_document(
+    doc_id: str, 
+    current_user: dict = Depends(require_role(["reviewer", "admin", "law_officer"]))
+):
+    doc = get_document(doc_id, tenant_id=current_user["tenant_id"])
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found or access denied")
+        
+    from database.db import get_db_connection
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE documents SET status = 'Failed' WHERE id = %s
+    ''', (doc_id,))
+    conn.commit()
+    conn.close()
+    
+    log_audit(current_user["id"], doc_id, "REJECT_DOCUMENT", {})
+    
+    await redis_cache.delete_pattern(f"docs:{current_user['tenant_id']}:*")
+    await redis_cache.delete(f"dashboard:{current_user['tenant_id']}")
+    await redis_cache.delete(f"audit:{current_user['tenant_id']}")
+    
+    logger.info(f"Document {doc_id} rejected by human reviewer.")
+    return {"message": "Document rejected", "doc_id": doc_id}
+
 @router.get("/dashboard/actions")
 async def get_dashboard_actions(current_user: dict = Depends(get_current_user)):
+    cache_key = f"dashboard:{current_user['tenant_id']}"
+    cached = await redis_cache.get(cache_key)
+    if cached:
+        return cached
+        
     docs = get_all_approved_documents(tenant_id=current_user["tenant_id"])
     for doc in docs:
         if doc["action_plan"] and isinstance(doc["action_plan"], str):
             doc["action_plan"] = json.loads(doc["action_plan"])
+            
+    await redis_cache.set(cache_key, docs, ex=300)
     return docs
 
 @router.get("/audit-log")
 async def get_audit_log(current_user: dict = Depends(get_current_user)):
+    cache_key = f"audit:{current_user['tenant_id']}"
+    cached = await redis_cache.get(cache_key)
+    if cached:
+        return cached
+
     from database.db import get_db_connection
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -151,7 +207,12 @@ async def get_audit_log(current_user: dict = Depends(get_current_user)):
         log = dict(row)
         if log["details_json"] and isinstance(log["details_json"], str):
             log["details_json"] = json.loads(log["details_json"])
+        # Format datetime for JSON serialization
+        if "timestamp" in log and log["timestamp"]:
+            log["timestamp"] = log["timestamp"].isoformat()
         logs.append(log)
+        
+    await redis_cache.set(cache_key, logs, ex=60)
     return logs
 
 @router.post("/chat/{doc_id}")

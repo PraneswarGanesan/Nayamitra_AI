@@ -188,7 +188,7 @@ export default function DashboardPage() {
                           }`}>{urg || '—'}</span>
                         </td>
                         <td className="py-2.5 px-3 text-right">
-                          <Link to={`/document/${doc.id}`} className="inline-flex items-center gap-1 bg-white border border-gray-200 text-[#2563eb] px-3 py-1.5 rounded-md text-xs font-bold hover:bg-blue-50 transition-colors shadow-sm">View</Link>
+                          <Link to={`/app/document/${doc.id}`} className="inline-flex items-center gap-1 bg-white border border-gray-200 text-[#2563eb] px-3 py-1.5 rounded-md text-xs font-bold hover:bg-blue-50 transition-colors shadow-sm">View</Link>
                         </td>
                       </tr>
                     );
@@ -201,10 +201,10 @@ export default function DashboardPage() {
 
         {/* Quick actions */}
         <div className="flex gap-3">
-          <Link to="/upload" className="inline-flex items-center gap-2 bg-[#1e3a5f] text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#2c5282] transition-colors">
+          <Link to="/app/upload" className="inline-flex items-center gap-2 bg-[#1e3a5f] text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#2c5282] transition-colors">
             <Upload size={16} /> Upload Judgment
           </Link>
-          <Link to="/documents" className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors">
+          <Link to="/app/documents" className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors">
             <FileText size={16} /> All Documents
           </Link>
         </div>

@@ -127,7 +127,7 @@ export default function DocumentsPage() {
                       </td>
                       <td className="py-3 px-4"><StatusBadge status={doc.status} /></td>
                       <td className="py-3 px-4 text-right">
-                        <Link to={`/document/${doc.id}`} className="inline-flex items-center gap-1 bg-white border border-gray-200 text-[#2563eb] px-3 py-1.5 rounded-md text-xs font-bold hover:bg-blue-50 transition-colors shadow-sm">
+                        <Link to={`/app/document/${doc.id}`} className="inline-flex items-center gap-1 bg-white border border-gray-200 text-[#2563eb] px-3 py-1.5 rounded-md text-xs font-bold hover:bg-blue-50 transition-colors shadow-sm">
                           <Eye size={13} /> View
                         </Link>
                       </td>

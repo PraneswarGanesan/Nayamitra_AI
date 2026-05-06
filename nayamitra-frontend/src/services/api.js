@@ -68,6 +68,10 @@ export const documentService = {
     const res = await api.post(`/api/verify/${docId}`, actionPlan);
     return res.data;
   },
+  async reject(docId) {
+    const res = await api.post(`/api/reject/${docId}`);
+    return res.data;
+  },
   async chat(docId, message, history) {
     const res = await api.post(`/api/chat/${docId}`, { message, history });
     return res.data;

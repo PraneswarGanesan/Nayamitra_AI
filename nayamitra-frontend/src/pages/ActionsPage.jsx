@@ -78,7 +78,7 @@ export default function ActionsPage() {
                           {lim.urgency_status}
                         </span>
                       )}
-                      <Link to={`/document/${doc.id}`} className="inline-flex items-center gap-1 bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-50 transition-colors">
+                      <Link to={`/app/document/${doc.id}`} className="inline-flex items-center gap-1 bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-gray-50 transition-colors">
                         <Eye size={14} /> Details
                       </Link>
                     </div>

@@ -10,7 +10,27 @@ from config import settings
 
 load_dotenv()
 
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+import time
+from database.cache import redis_cache
+
 app = FastAPI(title="NyayaMitra API", description="AI co-pilot for CCMS")
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    current_minute = int(time.time() // 60)
+    key = f"ratelimit:{client_ip}:{current_minute}"
+    
+    count = await redis_cache.incr(key)
+    if count and int(count) > 100:
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={"detail": "Rate limit exceeded (100 req/min). Please try again later."}
+        )
+        
+    return await call_next(request)
 
 # Allow CORS for frontend
 app.add_middleware(

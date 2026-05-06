@@ -4,9 +4,29 @@ import json
 import uuid
 from config import settings
 
+from psycopg2.pool import ThreadedConnectionPool
+
+db_pool = None
+
 def get_db_connection():
-    conn = psycopg2.connect(settings.SUPABASE_URI, cursor_factory=RealDictCursor)
-    return conn
+    global db_pool
+    if db_pool is None:
+        db_pool = ThreadedConnectionPool(1, 20, settings.SUPABASE_URI, cursor_factory=RealDictCursor)
+        
+    class PooledConnectionWrapper:
+        def __init__(self, conn, pool):
+            self.conn = conn
+            self.pool = pool
+        def cursor(self, *args, **kwargs):
+            return self.conn.cursor(*args, **kwargs)
+        def commit(self):
+            self.conn.commit()
+        def rollback(self):
+            self.conn.rollback()
+        def close(self):
+            self.pool.putconn(self.conn)
+            
+    return PooledConnectionWrapper(db_pool.getconn(), db_pool)
 
 def init_db():
     conn = get_db_connection()

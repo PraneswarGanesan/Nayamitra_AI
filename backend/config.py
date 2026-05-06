@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     # ── Database ──────────────────────────────────────────────────────────────
     DB_PATH: Path = BASE_DIR / "data" / "nayamitra.db"
     SUPABASE_URI: str = ""
+    UPSTASH_REDIS_REST_URL: str = ""
+    UPSTASH_REDIS_REST_TOKEN: str = ""
 
     # ── Authentication ────────────────────────────────────────────────────────
     JWT_SECRET: str = "super_secret_key_change_in_production"

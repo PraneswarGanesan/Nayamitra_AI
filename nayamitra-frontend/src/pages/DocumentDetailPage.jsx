@@ -15,6 +15,7 @@ export default function DocumentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'chat'
   
   // Edit State
@@ -91,6 +92,19 @@ export default function DocumentDetailPage() {
       setError(err.response?.data?.detail || 'Verification failed.');
     }
     setVerifying(false);
+  };
+
+  const handleReject = async () => {
+    if (!window.confirm('Are you sure you want to reject this document?')) return;
+    setRejecting(true);
+    try {
+      await documentService.reject(docId);
+      setDoc(prev => ({ ...prev, status: 'Failed' }));
+      navigate(-1);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Rejection failed.');
+    }
+    setRejecting(false);
   };
 
   const handleChat = async (e) => {
@@ -367,8 +381,12 @@ export default function DocumentDetailPage() {
           <div className="flex gap-3">
             {canVerify && !isApproved && (
               <>
-                <button className="px-4 py-2 border border-gray-300 rounded text-sm font-semibold text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors cursor-pointer">
-                  <AlertCircle size={16} /> Reject
+                <button 
+                  onClick={handleReject}
+                  disabled={rejecting}
+                  className="px-4 py-2 border border-gray-300 rounded text-sm font-semibold text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {rejecting ? '...' : <><AlertCircle size={16} /> Reject</>}
                 </button>
                 <button 
                   onClick={handleVerify}

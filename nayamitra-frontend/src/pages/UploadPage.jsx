@@ -51,7 +51,7 @@ export default function UploadPage() {
             <h2 className="text-lg font-bold mb-2">Extraction Complete</h2>
             <p className="text-sm text-gray-500 mb-5">{result.message}</p>
             <div className="flex gap-3 justify-center">
-              <button onClick={() => navigate(`/document/${result.doc_id}`)} className="bg-[#1e3a5f] text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#2c5282] cursor-pointer">
+              <button onClick={() => navigate(`/app/document/${result.doc_id}`)} className="bg-[#1e3a5f] text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#2c5282] cursor-pointer">
                 View Action Plan
               </button>
               <button onClick={() => { setFile(null); setResult(null); }} className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-50 cursor-pointer">

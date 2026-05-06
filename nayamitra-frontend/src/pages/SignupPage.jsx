@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Scale, AlertCircle } from 'lucide-react';
+import { Scale, AlertCircle, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function SignupPage() {
@@ -10,6 +10,7 @@ export default function SignupPage() {
   const [tenantId, setTenantId] = useState('tenant_1');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
 
@@ -19,7 +20,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signup(email, password, role, tenantId);
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError(err.response?.data?.detail || 'Sign up failed. Please try again.');
     } finally {
@@ -28,100 +29,136 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-      <div className="bg-white border border-gray-200 rounded-xl p-10 w-full max-w-md">
-        <div className="bg-[#1e3a5f] text-white text-center text-xs font-medium tracking-wide py-1.5 px-3 rounded mb-5">
-          Government of India • Court Case Monitoring System
-        </div>
+    <div className="min-h-screen bg-white relative flex flex-col items-center justify-center p-6 overflow-hidden font-['Inter']">
+      {/* Cinematic Background */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-100/40 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-slate-100/60 rounded-full blur-[120px]"></div>
+      </div>
 
+      <div className="relative z-10 w-full max-w-[460px]">
+        {/* Institutional Branding */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-[#1e3a5f] rounded-xl flex items-center justify-center mx-auto mb-4">
-            <Scale size={28} className="text-amber-500" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 text-white rounded-full text-[10px] font-bold uppercase tracking-[0.15em] mb-6 shadow-xl shadow-slate-900/20">
+            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
+            Establish Digital Credentials
           </div>
-          <h1 className="text-xl font-bold font-serif">Create Account</h1>
-          <p className="text-xs text-gray-500 mt-1">Register for NyayaMitra access</p>
+          
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter font-['Noto_Serif'] mb-2">NyayaMitra</h1>
+          <p className="text-sm text-slate-500 font-medium tracking-tight">Register for Judicial Analysis Access</p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md px-4 py-3 mb-5 flex items-center gap-2 text-sm">
-            <AlertCircle size={16} />
-            <span>{error}</span>
-          </div>
-        )}
+        {/* Auth Card */}
+        <div className="bg-white/90 backdrop-blur-3xl border border-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] rounded-[2.5rem] p-10">
+          {error && (
+            <div className="bg-red-50 border border-red-100 text-red-900 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3 text-sm animate-shake">
+              <AlertCircle size={18} className="text-red-500 mt-0.5" />
+              <span className="font-medium">{error}</span>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-              Email Address
-            </label>
-            <input
-              type="email"
-              className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#1e3a5f] focus:ring-2 focus:ring-[#1e3a5f]/10"
-              placeholder="officer@gov.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 gap-5">
+              <div>
+                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.1em] mb-2 ml-1">
+                  Official Email
+                </label>
+                <input
+                  type="email"
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#1e3a8a] focus:ring-4 focus:ring-[#1e3a8a]/5 transition-all"
+                  placeholder="officer@gov.in"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-              Password
-            </label>
-            <input
-              type="password"
-              className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#1e3a5f] focus:ring-2 focus:ring-[#1e3a5f]/10"
-              placeholder="Create a strong password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-            />
-          </div>
+              <div>
+                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.1em] mb-2 ml-1">
+                  Security Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#1e3a8a] focus:ring-4 focus:ring-[#1e3a8a]/5 transition-all"
+                    placeholder="Min. 6 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1e3a8a] transition-colors p-1"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
 
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-              Role
-            </label>
-            <select
-              className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#1e3a5f] focus:ring-2 focus:ring-[#1e3a5f]/10 bg-white"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.1em] mb-2 ml-1">
+                    Access Level
+                  </label>
+                  <select
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm font-medium focus:outline-none focus:border-[#1e3a8a] focus:ring-4 focus:ring-[#1e3a8a]/5 transition-all appearance-none"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                  >
+                    <option value="law_officer">Officer</option>
+                    <option value="reviewer">Reviewer</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.1em] mb-2 ml-1">
+                    Department ID
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#1e3a8a] focus:ring-4 focus:ring-[#1e3a8a]/5 transition-all"
+                    placeholder="tenant_1"
+                    value={tenantId}
+                    onChange={(e) => setTenantId(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="group relative w-full bg-[#1e3a8a] text-white font-black py-4.5 rounded-2xl hover:bg-[#1e40af] transition-all transform active:scale-[0.98] shadow-2xl shadow-blue-800/20 mt-4"
+              disabled={loading}
             >
-              <option value="law_officer">Law Officer (Upload & View)</option>
-              <option value="reviewer">Reviewer (Verify Plans)</option>
-              <option value="admin">Admin (Full Access)</option>
-            </select>
+              <div className="relative z-10 flex items-center justify-center gap-2">
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    Create Digital Account
+                    <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </div>
+            </button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+            <p className="text-[13px] text-slate-500 font-medium">
+              Already authorized?{' '}
+              <Link to="/login" className="text-[#1e3a8a] font-bold hover:underline underline-offset-4">
+                Sign In
+              </Link>
+            </p>
           </div>
-
-          <div className="mb-6">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
-              Department / Tenant ID
-            </label>
-            <input
-              type="text"
-              className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-[#1e3a5f] focus:ring-2 focus:ring-[#1e3a5f]/10"
-              placeholder="e.g. tenant_1"
-              value={tenantId}
-              onChange={(e) => setTenantId(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-[#1e3a5f] text-white font-semibold py-2.5 rounded-md hover:bg-[#2c5282] transition-colors disabled:opacity-50 cursor-pointer"
-            disabled={loading}
-          >
-            {loading ? 'Creating Account…' : 'Sign Up'}
-          </button>
-        </form>
-
-        <p className="text-center text-xs text-gray-500 mt-5">
-          Already have an account?{' '}
-          <Link to="/login" className="text-[#1e3a5f] font-semibold hover:underline">
-            Sign in
-          </Link>
+        </div>
+        
+        <p className="text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-8 opacity-50">
+          Authorized Registration Protocol
         </p>
       </div>
     </div>

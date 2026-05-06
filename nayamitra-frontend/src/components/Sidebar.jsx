@@ -3,11 +3,11 @@ import { LayoutDashboard, FileText, Upload, CheckSquare, LogOut, Scale, Activity
 import { useAuth } from '../context/AuthContext';
 
 const NAV = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/documents', label: 'Documents', icon: FileText },
-  { path: '/upload', label: 'Upload Judgment', icon: Upload },
-  { path: '/actions', label: 'Action Plans', icon: FileText },
-  { path: '/activity', label: 'Audit Trail', icon: Activity },
+  { path: '/app', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/app/documents', label: 'Documents', icon: FileText },
+  { path: '/app/upload', label: 'Upload Judgment', icon: Upload },
+  { path: '/app/actions', label: 'Action Plans', icon: FileText },
+  { path: '/app/activity', label: 'Audit Trail', icon: Activity },
 ];
 
 export default function Sidebar() {
@@ -59,7 +59,10 @@ export default function Sidebar() {
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={() => {
+            logout();
+            window.location.href = '/';
+          }}
           className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors cursor-pointer"
         >
           <LogOut size={18} /> Logout

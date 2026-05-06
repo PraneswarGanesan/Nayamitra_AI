@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     # ── Database ──────────────────────────────────────────────────────────────
     DB_PATH: Path = BASE_DIR / "data" / "nayamitra.db"
+    SUPABASE_URI: str = "postgresql://postgres:nyayamitra%40123@db.snjnufitesjsixmefcqn.supabase.co:5432/postgres"
 
     # ── Authentication ────────────────────────────────────────────────────────
     JWT_SECRET: str = "super_secret_key_change_in_production"

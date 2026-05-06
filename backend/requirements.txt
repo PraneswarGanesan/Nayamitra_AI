@@ -13,3 +13,4 @@ passlib[bcrypt]
 python-jose[cryptography]
 chromadb
 sentence-transformers
+psycopg2-binary

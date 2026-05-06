@@ -46,7 +46,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, email, role, tenant_id FROM users WHERE id = ?", (user_id,))
+    cursor.execute("SELECT id, email, role, tenant_id FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     conn.close()
     
@@ -63,18 +63,35 @@ def require_role(allowed_roles: list):
 
 @router.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, email, hashed_password, role, tenant_id FROM users WHERE email = ?", (form_data.username,))
-    user = cursor.fetchone()
-    conn.close()
+    print(f"Login attempt for email: {form_data.username}")
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # Case-insensitive email search
+        cursor.execute("SELECT id, email, hashed_password, role, tenant_id FROM users WHERE LOWER(email) = LOWER(%s)", (form_data.username,))
+        user = cursor.fetchone()
+        conn.close()
+    except Exception as e:
+        print(f"Database error during login: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error - Database connection failed")
     
-    if not user or not verify_password(form_data.password, user["hashed_password"]):
+    if not user:
+        print(f"User not found: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if not verify_password(form_data.password, user["hashed_password"]):
+        print(f"Invalid password for user: {form_data.username}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+    print(f"Login successful for: {form_data.username}")
         
     access_token_expires = timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -89,13 +106,13 @@ async def signup(request: SignupRequest):
     cursor = conn.cursor()
     
     # Check if user exists
-    cursor.execute("SELECT id FROM users WHERE email = ?", (request.email,))
+    cursor.execute("SELECT id FROM users WHERE email = %s", (request.email,))
     if cursor.fetchone():
         conn.close()
         raise HTTPException(status_code=400, detail="Email already registered")
         
     # Ensure tenant exists
-    cursor.execute('INSERT OR IGNORE INTO tenants (id, name) VALUES (?, ?)', (request.tenant_id, "Default Department"))
+    cursor.execute('INSERT INTO tenants (id, name) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING', (request.tenant_id, "Default Department"))
     
     # Create user
     user_id = str(uuid.uuid4())
@@ -103,7 +120,7 @@ async def signup(request: SignupRequest):
     
     cursor.execute('''
         INSERT INTO users (id, email, hashed_password, role, tenant_id)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
     ''', (user_id, request.email, hashed_password, request.role, request.tenant_id))
     
     conn.commit()

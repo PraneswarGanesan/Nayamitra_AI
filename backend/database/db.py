@@ -1,17 +1,11 @@
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import json
 import uuid
-from pathlib import Path
 from config import settings
 
 def get_db_connection():
-    # check_same_thread=False is needed for FastAPI when using SQLite
-    conn = sqlite3.connect(settings.DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    # High performance pragmas for 1000 RPM SQLite
-    conn.execute('PRAGMA journal_mode=WAL;')
-    conn.execute('PRAGMA synchronous=NORMAL;')
-    conn.execute('PRAGMA foreign_keys=ON;')
+    conn = psycopg2.connect(settings.SUPABASE_URI, cursor_factory=RealDictCursor)
     return conn
 
 def init_db():
@@ -56,7 +50,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS action_plans (
             id TEXT PRIMARY KEY,
             document_id TEXT UNIQUE NOT NULL,
-            plan_json JSON,
+            plan_json JSONB,
             FOREIGN KEY(document_id) REFERENCES documents(id)
         )
     ''')
@@ -71,7 +65,7 @@ def init_db():
             original_value TEXT,
             edited_value TEXT,
             verified_by TEXT,
-            verified_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(document_id) REFERENCES documents(id),
             FOREIGN KEY(verified_by) REFERENCES users(id)
         )
@@ -84,8 +78,8 @@ def init_db():
             user_id TEXT,
             document_id TEXT,
             action TEXT NOT NULL,
-            details_json JSON,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            details_json JSONB,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id),
             FOREIGN KEY(document_id) REFERENCES documents(id)
         )
@@ -99,20 +93,20 @@ def save_document(doc_id: str, status: str, pdf_path: str, action_plan: dict = N
     cursor = conn.cursor()
     
     # Ensure default tenant exists for testing if not present
-    cursor.execute('INSERT OR IGNORE INTO tenants (id, name) VALUES (?, ?)', ("default_tenant", "Default Department"))
+    cursor.execute('INSERT INTO tenants (id, name) VALUES (%s, %s) ON CONFLICT (id) DO NOTHING', ("default_tenant", "Default Department"))
     
     cursor.execute('''
         INSERT INTO documents (id, tenant_id, uploaded_by, status, pdf_path)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET status=excluded.status
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (id) DO UPDATE SET status=EXCLUDED.status
     ''', (doc_id, tenant_id, uploaded_by, status, pdf_path))
     
     if action_plan:
         plan_id = str(uuid.uuid4())
         cursor.execute('''
             INSERT INTO action_plans (id, document_id, plan_json)
-            VALUES (?, ?, ?)
-            ON CONFLICT(document_id) DO UPDATE SET plan_json=excluded.plan_json
+            VALUES (%s, %s, %s)
+            ON CONFLICT (document_id) DO UPDATE SET plan_json=EXCLUDED.plan_json
         ''', (plan_id, doc_id, json.dumps(action_plan)))
         
     conn.commit()
@@ -120,18 +114,18 @@ def save_document(doc_id: str, status: str, pdf_path: str, action_plan: dict = N
 
 def get_document(doc_id: str, tenant_id: str = None):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     query = '''
         SELECT d.id, d.status, d.pdf_path, d.tenant_id, a.plan_json as action_plan
         FROM documents d
         LEFT JOIN action_plans a ON d.id = a.document_id
-        WHERE d.id = ?
+        WHERE d.id = %s
     '''
     params = [doc_id]
     
     if tenant_id:
-        query += ' AND d.tenant_id = ?'
+        query += ' AND d.tenant_id = %s'
         params.append(tenant_id)
         
     cursor.execute(query, params)
@@ -144,18 +138,18 @@ def get_document(doc_id: str, tenant_id: str = None):
 
 def get_all_approved_documents(tenant_id: str = None):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     query = '''
         SELECT d.id, d.status, d.pdf_path, d.tenant_id, a.plan_json as action_plan
         FROM documents d
         LEFT JOIN action_plans a ON d.id = a.document_id
-        WHERE d.status = "Approved"
+        WHERE d.status = 'Approved'
     '''
     params = []
     
     if tenant_id:
-        query += ' AND d.tenant_id = ?'
+        query += ' AND d.tenant_id = %s'
         params.append(tenant_id)
         
     cursor.execute(query, params)
@@ -169,10 +163,13 @@ def log_audit(user_id: str, document_id: str, action: str, details: dict):
     audit_id = str(uuid.uuid4())
     cursor.execute('''
         INSERT INTO audit_log (id, user_id, document_id, action, details_json)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
     ''', (audit_id, user_id, document_id, action, json.dumps(details)))
     conn.commit()
     conn.close()
 
 # Initialize DB tables on import
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"Failed to initialize database: {e}")

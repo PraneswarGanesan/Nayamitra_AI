@@ -74,9 +74,9 @@ async def list_documents(current_user: dict = Depends(get_current_user)):
     cursor = conn.cursor()
     
     if current_user["role"] == "law_officer":
-        cursor.execute("SELECT id, status, pdf_path FROM documents WHERE tenant_id = ? AND uploaded_by = ?", (current_user["tenant_id"], current_user["id"]))
+        cursor.execute("SELECT id, status, pdf_path FROM documents WHERE tenant_id = %s AND uploaded_by = %s", (current_user["tenant_id"], current_user["id"]))
     else:
-        cursor.execute("SELECT id, status, pdf_path, uploaded_by FROM documents WHERE tenant_id = ?", (current_user["tenant_id"],))
+        cursor.execute("SELECT id, status, pdf_path, uploaded_by FROM documents WHERE tenant_id = %s", (current_user["tenant_id"],))
         
     rows = cursor.fetchall()
     conn.close()
@@ -88,7 +88,7 @@ async def get_document_by_id(doc_id: str, current_user: dict = Depends(get_curre
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found or access denied")
         
-    if doc["action_plan"]:
+    if doc["action_plan"] and isinstance(doc["action_plan"], str):
         doc["action_plan"] = json.loads(doc["action_plan"])
         
     return doc
@@ -107,10 +107,10 @@ async def verify_document(
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        UPDATE documents SET status = "Approved" WHERE id = ?
+        UPDATE documents SET status = 'Approved' WHERE id = %s
     ''', (doc_id,))
     cursor.execute('''
-        UPDATE action_plans SET plan_json = ? WHERE document_id = ?
+        UPDATE action_plans SET plan_json = %s WHERE document_id = %s
     ''', (json.dumps(verified_plan.dict()), doc_id))
     conn.commit()
     conn.close()
@@ -123,7 +123,7 @@ async def verify_document(
 async def get_dashboard_actions(current_user: dict = Depends(get_current_user)):
     docs = get_all_approved_documents(tenant_id=current_user["tenant_id"])
     for doc in docs:
-        if doc["action_plan"]:
+        if doc["action_plan"] and isinstance(doc["action_plan"], str):
             doc["action_plan"] = json.loads(doc["action_plan"])
     return docs
 
@@ -138,7 +138,7 @@ async def get_audit_log(current_user: dict = Depends(get_current_user)):
         SELECT a.id, a.user_id, a.document_id, a.action, a.details_json, a.timestamp, u.email as user_email
         FROM audit_log a
         JOIN users u ON a.user_id = u.id
-        WHERE u.tenant_id = ?
+        WHERE u.tenant_id = %s
         ORDER BY a.timestamp DESC
         LIMIT 50
     '''
@@ -149,7 +149,7 @@ async def get_audit_log(current_user: dict = Depends(get_current_user)):
     logs = []
     for row in rows:
         log = dict(row)
-        if log["details_json"]:
+        if log["details_json"] and isinstance(log["details_json"], str):
             log["details_json"] = json.loads(log["details_json"])
         logs.append(log)
     return logs

@@ -413,7 +413,7 @@ export default function DocumentDetailPage() {
         </div>
         {doc?.pdf_path ? (
           <PdfHighlighter 
-            pdfUrl={`http://localhost:8000/${doc.pdf_path.replace(/\\/g, '/')}`} 
+            pdfUrl={`https://nayamitra-backend.onrender.com/${doc.pdf_path.replace(/\\/g, '/')}`} 
             activeHighlight={activeHighlight} 
           />
         ) : (
